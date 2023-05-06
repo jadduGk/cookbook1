@@ -1,0 +1,52 @@
+---
+driver:
+  name: ssh
+  username: ubuntu
+  ssh_key: /home/ubuntu/jaddu_gopi_kp_01.pem
+
+transport:
+  name: ssh
+  max_ssh_sessions: 2
+
+## The forwarded_port port feature lets you connect to ports on the VM guest
+## via localhost on the host.
+## see also: https://www.vagrantup.com/docs/networking/forwarded_ports
+
+#  network:
+#    - ["forwarded_port", {guest: 80, host: 8080}]
+
+provisioner:
+  name: chef_zero
+  require_chef_omnibus: false
+  #chef_client_path: "chef_client"
+  #  client_rb:
+  #       chef_server_url: 'local-mode'
+  #       validation_client_name: 'chef-validator'
+  #       chef_client_path: '/opt/chef/bin/chef-client'
+  ## product_name and product_version specifies a specific Chef product and version to install.
+  ## see the Chef documentation for more details: https://docs.chef.io/workstation/config_yml_kitchen/
+  #  product_name: chef
+  #  product_version: 17
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: 10.25.55.166
+    driver:
+      hostname: 10.25.55.166
+      username: ubuntu
+
+suites:
+  - name: default
+    run_list:
+     - recipe[cookbook1::default]
+    verifier:
+      name: inspec
+      inspec_tests:
+        - test/integration/default/default_test.rb
+    attributes:
+      chef_client:
+        config:
+          log_level: ":debug"
+          ssl_verify_mode: ":verify_none"

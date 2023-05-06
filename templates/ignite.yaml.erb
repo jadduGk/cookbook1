@@ -1,0 +1,101 @@
+startDelaySeconds: 0
+#hostPort: 127.0.0.1:8090
+ssl: false
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+attrNameSnakeCase: true
+whitelistObjectNames: ["org.apache:clsLdr=*,group=Kernal,name=ClusterLocalNodeMetricsMXBeanImpl",
+"java.lang:type=OperatingSystem", "org.apache:clsLdr=*,group=\"Cache groups\",name=*",
+"org.apache:clsLdr=*,group=DataRegionMetrics,name=*", "java.lang:type=Threading",
+"org.apache:clsLdr=*,group=SPIs,name=TcpCommunicationSpi"]
+rules:
+  # Uptime.
+  - pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(.+)><>(UpTime)"
+    name: ignite_uptime
+    help: in minutes.
+    valueFactor: 0.001
+    labels:
+      host: 127.0.0.1
+    type: COUNTER
+
+  # % времени полезной работы на ноде.
+  - pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(.+)><>(BusyTimePercentage)"
+    name: ignite_busy_time_percentage
+    labels:
+      host: 127.0.0.1
+    type: GAUGE
+
+  # открытые файлы
+  - pattern: "java.lang<type=OperatingSystem><>(OpenFileDescriptorCount|MaxFileDescriptorCount)"
+    name: ignite_host_fd_$1
+    labels:
+      host: 127.0.0.1
+    type: GAUGE
+
+  # cpu на ноде
+  - pattern: "java.lang<type=OperatingSystem><>(ProcessCpuLoad|SystemCpuLoad)"
+    name: ignite_host_cpu_$1
+    help: in %
+    valueFactor: 100
+    labels:
+      host: 127.0.0.1
+    type: GAUGE
+
+  # физическая память на ноде
+  - pattern: "java.lang<type=OperatingSystem><>(FreePhysicalMemorySize|TotalPhysicalMemorySize|FreeSwapSpaceSize|TotalSwapSpaceSize)"
+    name: ignite_host_mem_$1
+    labels:
+      host: 127.0.0.1
+    type: GAUGE
+
+  # треды
+  # ThreadImpl implements https://docs.oracle.com/javase/8/docs/jre/api/management/extension/com/sun/management/ThreadMXBean.html
+  - pattern: "java.lang<type=Threading><>(.*ThreadCount)"
+    name: ignite_jvm_threads_$1
+    labels:
+      host: 127.0.0.1
+    type: GAUGE
+
+  # jvm heap на ноде
+  # https://ignite.apache.org/releases/latest/javadoc/org/apache/ignite/mxbean/ClusterMetricsMXBean.html
+  - pattern: "^org.apache<clsLdr=(.+), group=Kernal, name=(.+)><>(HeapMemoryTotal|HeapMemoryUsed|NonHeapMemoryTotal|NonHeapMemoryUsed)"
+    name: ignite_jvm_$3
+    labels:
+      host: 127.0.0.1
+    type: GAUGE
+
+  # cache groups
+  # https://ignite.apache.org/docs/latest/configuring-caches/cache-groups
+  - pattern: "^org.apache<clsLdr=(.+), group=\"Cache groups\", name=(.+)><>(Backups|TotalAllocatedPages|TotalAllocatedSize|Partitions|LocalNodeOwningPartitionsCount|ClusterMovingPartitionsCount|LocalNodeMovingPartitionsCount)"
+    name: ignite_cache_group_$3
+    labels:
+      host: 127.0.0.1
+      cache_group: $2
+    type: GAUGE
+
+  # memory pages
+  # see code of DataRegionMetricsImpl.java
+  - pattern: "^org.apache<clsLdr=(.+), group=DataRegionMetrics, name=(.+)><>(.*Pages|AllocationRate|PagesFillFactor):"
+    name: ignite_data_region_$3
+    labels:
+      host: 127.0.0.1
+      data_region: $2
+    type: GAUGE
+
+  # memory stats
+  # see code of DataRegionMetricsImpl.java
+  - pattern: "^org.apache<clsLdr=(.+), group=DataRegionMetrics, name=(.+)><>(Off[Hh]eap.*|MaxSize|PhysicalMemorySize|TotalAllocatedSize):"
+    name: ignite_data_region_$3
+    labels:
+      host: 127.0.0.1
+      data_region: $2
+    type: GAUGE
+
+  # communications stats
+  # see TcpCommunicationSpi.java
+  - pattern: "^org.apache<clsLdr=(.+), group=SPIs, name=(TcpCommunicationSpi)><>(.*MessagesCount|OutboundMessagesQueueSize)"
+    name: ignite_communication_$3
+    labels:
+      host: 127.0.0.1
+      data_region: $2
+    type: GAUGE

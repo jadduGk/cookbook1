@@ -1,0 +1,23 @@
+[Unit]
+Description=Apache Ignite Service
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/ignite
+User=ignite
+PrivateDevices=yes
+ProtectSystem=full
+Type=simple
+Environment=JVM_OPTS=-javaagent:/opt/ignite/apache-ignite-2.14.0-bin/exporter/jmx_prometheus_javaagent-0.18.0.jar=8090:/opt/ignite/apache-ignite-2.14.0-bin/exporter/ignite.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=10
+ExecStart=/opt/ignite/apache-ignite-2.14.0-bin/bin/ignite.sh
+SyslogIdentifier=Ignite
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+Alias=ignite.service
