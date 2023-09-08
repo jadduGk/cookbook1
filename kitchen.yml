@@ -17,7 +17,7 @@ transport:
 
 provisioner:
   name: chef_zero
-  require_chef_omnibus: false
+  #require_chef_omnibus: false
   #chef_client_path: "chef_client"
   #  client_rb:
   #       chef_server_url: 'local-mode'
@@ -32,9 +32,9 @@ verifier:
   name: inspec
 
 platforms:
-  - name: 10.25.55.166
+  - name: 10.25.55.205
     driver:
-      hostname: 10.25.55.166
+      hostname: 10.25.55.205
       username: ubuntu
 
 suites:
